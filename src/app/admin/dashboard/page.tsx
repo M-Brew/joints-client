@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-export default function Dashboard() {
+export default async function Dashboard() {
   return (
     <Box
       sx={{

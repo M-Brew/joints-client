@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState, MouseEvent } from "react";
+import { useEffect, useState, MouseEvent, useCallback } from "react";
 
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -30,17 +30,25 @@ import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
 
 import navItems from "@/data/settings-data.json";
-import { SettingsContext } from "@/contexts/settings-context";
 import SettingsForm from "./SettingsForm";
 import SettingsDrawer from "./SettingsDrawer";
 import SettingsDetail from "./SettingsDetail";
+import {
+  addSettingItem,
+  deleteSettingItem,
+  getSettingItems,
+  updateSettingItem,
+} from "@/app/api/settings";
+import { axiosAuth } from "@/utils/axios";
 
-export default function SettingsTable() {
-  const { slug } = useContext(SettingsContext);
-
+export default function SettingsTable(props: {
+  slug: string;
+  data?: ISettingItem[];
+}) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));
 
+  const [slug, setSlug] = useState("");
   const [data, setData] = useState<ISettingItem[]>([]);
   const [title, setTitle] = useState<string>();
   const [openForm, setOpenForm] = useState(false);
@@ -50,24 +58,22 @@ export default function SettingsTable() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openDetails, setOpenDetails] = useState(false);
 
-  const getData = async (slug: string) => {
-    try {
-      const response = await fetch(`http://localhost:5002/api/${slug}`);
-      if (response.status === 200) {
-        const data = await response.json();
-        setData(data as ISettingItem[]);
-      } else {
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
-    const item = navItems.find((i) => i.slug === slug);
+    const item = navItems.find((i) => i.slug === props.slug);
     setTitle(item?.title);
-    getData(slug);
-  }, [slug]);
+    setSlug(props.slug);
+
+    (async () => {
+      try {
+        const response = await getSettingItems(props.slug);
+        if (response?.status === 200) {
+          setData(response.data ?? []);
+        }
+      } catch (error) {
+        console.log({ error });
+      }
+    })();
+  }, [props.slug]);
 
   const handleOpenForm = () => {
     setOpenForm(true);
@@ -96,16 +102,9 @@ export default function SettingsTable() {
     try {
       setError(undefined);
 
-      const response = await fetch(`http://localhost:5002/api/${slug}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, description }),
-      });
-
+      const response = await addSettingItem(slug, { name, description });
       if (response.status === 201) {
-        const responseData = await response.json();
+        const responseData = response.data;
         setData((prev) => [...prev, responseData as ISettingItem]);
         setSuccess(
           `${title?.slice(0, title.length - 1)} created successfully.`
@@ -115,7 +114,7 @@ export default function SettingsTable() {
           handleCloseForm();
         }, 2000);
       } else {
-        const error = await response.json();
+        const error = await response.data;
         if (error) {
           setError(error.error);
         } else {
@@ -132,19 +131,9 @@ export default function SettingsTable() {
     try {
       setError(undefined);
 
-      const response = await fetch(
-        `http://localhost:5002/api/${slug}/${selectedItem?._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, description }),
-        }
-      );
-
+      const response = await updateSettingItem(slug, selectedItem?._id!, { name, description });
       if (response.status === 200) {
-        const responseData = await response.json();
+        const responseData = await response.data;
         const update = data.map((i) =>
           i._id === (responseData as ISettingItem)._id ? responseData : i
         );
@@ -179,13 +168,7 @@ export default function SettingsTable() {
     try {
       handleDeleteError(undefined);
 
-      const response = await fetch(
-        `http://localhost:5002/api/${slug}/${item?._id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await deleteSettingItem(slug, item._id);
       if (response.status === 204) {
         setSuccess(
           `${title?.slice(0, title.length - 1)} deleted successfully.`
@@ -261,9 +244,12 @@ export default function SettingsTable() {
                       cursor: "pointer",
                     }}
                     hover
-                    onClick={() => handleOpenDetails(item)}
                   >
-                    <TableCell component="th" scope="row">
+                    <TableCell
+                      component="th"
+                      scope="row"
+                      onClick={() => handleOpenDetails(item)}
+                    >
                       <Box>
                         <Box>
                           <Typography>{item.name}</Typography>
@@ -284,10 +270,18 @@ export default function SettingsTable() {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell align="right">{item.count}</TableCell>
+                    <TableCell
+                      align="right"
+                      onClick={() => handleOpenDetails(item)}
+                    >
+                      {item.count}
+                    </TableCell>
                     {matches && (
                       <>
-                        <TableCell align="right">
+                        <TableCell
+                          align="right"
+                          onClick={() => handleOpenDetails(item)}
+                        >
                           {new Date(item.createdAt).toLocaleDateString(
                             "en-uk",
                             {
@@ -299,7 +293,10 @@ export default function SettingsTable() {
                             }
                           )}
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell
+                          align="right"
+                          onClick={() => handleOpenDetails(item)}
+                        >
                           {new Date(item.updatedAt).toLocaleDateString(
                             "en-uk",
                             {
@@ -407,7 +404,11 @@ export default function SettingsTable() {
           <SettingsDetail settingItem={selectedItem} />
         </Box>
       </Modal>
-      <SettingsDrawer open={openDrawer} handleOpenDrawer={handleOpenDrawer} />
+      <SettingsDrawer
+        slug={slug}
+        open={openDrawer}
+        handleOpenDrawer={handleOpenDrawer}
+      />
     </>
   );
 }

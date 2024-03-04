@@ -1,5 +1,3 @@
-import { useContext } from "react";
-
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import List from "@mui/material/List";
@@ -9,10 +7,11 @@ import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 
 import navItems from "@/data/settings-data.json";
-import { SettingsContext } from "@/contexts/settings-context";
+import { useRouter } from "next/navigation";
 
-export default function SettingsNav() {
-  const { slug, handleSetSlug } = useContext(SettingsContext);
+export default function SettingsNav(props: { slug: string }) {
+  const { slug } = props;
+  const router = useRouter();
 
   return (
     <Box>
@@ -22,7 +21,9 @@ export default function SettingsNav() {
             <ListItem key={navItem.slug} sx={{ paddingX: 1, paddingY: 0.5 }}>
               <ListItemButton
                 sx={{ borderRadius: 2 }}
-                onClick={() => handleSetSlug(navItem.slug)}
+                onClick={() =>
+                  router.push(`/admin/dashboard/settings/${navItem.slug}`)
+                }
                 selected={slug === navItem.slug}
               >
                 <ListItemText

@@ -1,6 +1,7 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -12,15 +13,10 @@ import AppBar, { AppBarProps } from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import Drawer from "@mui/material/Drawer";
-import Divider from "@mui/material/Divider";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemButton from "@mui/material/ListItemButton";
 
 import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import DashboardDrawer from "./DashboardDrawer";
+import { signOut } from "@/app/api/auth";
 
 interface TopBarProps extends AppBarProps {
   open?: boolean;
@@ -43,29 +39,14 @@ const TopBar = styled(AppBar, {
   }),
 }));
 
-const navItems: { title: string; link: string }[] = [
-  {
-    title: "Dashboard",
-    link: "",
-  },
-  {
-    title: "Settings",
-    link: "/settings",
-  },
-];
-
-export default function DashboardNav({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function DashboardNav(props: IDashboardNav) {
+  const { children } = props;
   const router = useRouter();
-  const pathname = usePathname();
 
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));
 
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (matches) {
@@ -83,86 +64,68 @@ export default function DashboardNav({
     setOpen(false);
   };
 
+  const handleSignOut = async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (refreshToken) {
+      const response = await signOut(refreshToken);
+      if (response.status === 204) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        router.replace("/admin");
+      }
+    }
+  };
+
   return (
-    <Box>
-      <CssBaseline />
-      <TopBar position="fixed" open={open}>
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2, display: open ? "none" : "block" }}
-            onClick={handleOpen}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" sx={{ display: open ? "none" : "block" }}>
-              Joints
-            </Typography>
-          </Box>
-          <Box>
-            <Typography>Logout</Typography>
-          </Box>
-        </Toolbar>
-      </TopBar>
-      <Drawer
-        sx={{
-          width: 250,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: 250,
-            boxSizing: "border-box",
-          },
-        }}
-        variant={matches ? "persistent" : "temporary"}
-        role="presentation"
-        anchor={"left"}
-        open={open}
-        onClose={handleClose}
-      >
+    <>
+      <Box>
+        <CssBaseline />
+        <TopBar position="fixed" open={open}>
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2, display: open ? "none" : "block" }}
+              onClick={handleOpen}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ display: open ? "none" : "block" }}
+              >
+                Joints
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                sx={{ cursor: "pointer" }}
+                onClick={handleSignOut}
+              >
+                Logout
+              </Typography>
+            </Box>
+          </Toolbar>
+        </TopBar>
         <Box
           sx={{
-            paddingX: 3,
-            paddingY: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            marginTop: "64px",
+            ml: matches ? (open ? "250px" : 0) : 0,
+            minHeight: "calc(100vh - 64px)",
+            backgroundColor: "#f3f6f999",
           }}
         >
-          <Typography variant="h6">Joints</Typography>
-          <ChevronLeftIcon sx={{ cursor: "pointer" }} onClick={handleClose} />
+          {children}
         </Box>
-        <Divider />
-        <List component="nav">
-          {navItems.map((navItem, idx) => (
-            <ListItem key={idx} sx={{ paddingX: 1, paddingY: 0.5 }}>
-              <ListItemButton
-                onClick={() => router.push(`/dashboard${navItem.link}`)}
-                selected={pathname === `/dashboard${navItem.link}`}
-              >
-                <ListItemText
-                  primary={
-                    <Typography fontSize={14}>{navItem.title}</Typography>
-                  }
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Drawer>
-      <Box
-        sx={{
-          marginTop: "64px",
-          ml: matches ? open ? "250px" : 0 : 0,
-          minHeight: "calc(100vh - 64px)",
-          backgroundColor: "#f3f6f999",
-        }}
-      >
-        {children}
       </Box>
-    </Box>
+      <DashboardDrawer open={open} handleClose={handleClose} />
+    </>
   );
+}
+
+interface IDashboardNav {
+  children: React.ReactNode;
 }

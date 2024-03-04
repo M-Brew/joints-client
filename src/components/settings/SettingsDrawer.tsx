@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 
 import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
@@ -9,11 +9,11 @@ import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 
 import navItems from "@/data/settings-data.json";
-import { SettingsContext } from "@/contexts/settings-context";
+import { useRouter } from "next/navigation";
 
 export default function SettingsDrawer(props: ISettingsDrawer) {
-  const { slug, handleSetSlug } = useContext(SettingsContext);
-  const { open, handleOpenDrawer } = props;
+  const { slug, open, handleOpenDrawer } = props;
+  const router = useRouter();
 
   return (
     <Drawer anchor={"left"} open={open} onClose={() => handleOpenDrawer(false)}>
@@ -28,7 +28,7 @@ export default function SettingsDrawer(props: ISettingsDrawer) {
             <ListItem key={navItem.slug} sx={{ paddingX: 1, paddingY: 0.5 }}>
               <ListItemButton
                 sx={{ borderRadius: 2 }}
-                onClick={() => handleSetSlug(navItem.slug)}
+                onClick={() => router.push(`/admin/dashboard/settings/${navItem.slug}`)}
                 selected={slug === navItem.slug}
               >
                 <ListItemText
@@ -46,6 +46,7 @@ export default function SettingsDrawer(props: ISettingsDrawer) {
 }
 
 interface ISettingsDrawer {
+  slug: string;
   open: boolean;
   handleOpenDrawer: (value: boolean) => void;
 }
