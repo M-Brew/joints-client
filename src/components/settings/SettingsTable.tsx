@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, MouseEvent, useCallback } from "react";
+import { useEffect, useState, MouseEvent } from "react";
 
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -39,7 +39,6 @@ import {
   getSettingItems,
   updateSettingItem,
 } from "@/app/api/settings";
-import { axiosAuth } from "@/utils/axios";
 
 export default function SettingsTable(props: {
   slug: string;
@@ -103,7 +102,7 @@ export default function SettingsTable(props: {
       setError(undefined);
 
       const response = await addSettingItem(slug, { name, description });
-      if (response.status === 201) {
+      if (response?.status === 201) {
         const responseData = response.data;
         setData((prev) => [...prev, responseData as ISettingItem]);
         setSuccess(
@@ -114,7 +113,7 @@ export default function SettingsTable(props: {
           handleCloseForm();
         }, 2000);
       } else {
-        const error = await response.data;
+        const error = response?.data;
         if (error) {
           setError(error.error);
         } else {
@@ -132,10 +131,9 @@ export default function SettingsTable(props: {
       setError(undefined);
 
       const response = await updateSettingItem(slug, selectedItem?._id!, { name, description });
-      if (response.status === 200) {
-        const responseData = await response.data;
+      if (response?.status === 200) {
         const update = data.map((i) =>
-          i._id === (responseData as ISettingItem)._id ? responseData : i
+          i._id === (response.data as ISettingItem)._id ? response.data : i
         );
         setData(update);
         setSuccess(
@@ -146,7 +144,7 @@ export default function SettingsTable(props: {
           handleCloseForm();
         }, 2000);
       } else {
-        const error = await response.json();
+        const error = response?.data;
         if (error) {
           setError(error.error);
         } else {
@@ -169,7 +167,7 @@ export default function SettingsTable(props: {
       handleDeleteError(undefined);
 
       const response = await deleteSettingItem(slug, item._id);
-      if (response.status === 204) {
+      if (response?.status === 204) {
         setSuccess(
           `${title?.slice(0, title.length - 1)} deleted successfully.`
         );
@@ -180,7 +178,7 @@ export default function SettingsTable(props: {
           handleClose();
         }, 2000);
       } else {
-        const error = await response.json();
+        const error = response?.data;
         if (error) {
           handleDeleteError(error.error);
         } else {

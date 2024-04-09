@@ -1,4 +1,5 @@
 import axios, { axiosAuth } from "@/utils/axios";
+import { isAxiosError } from "axios";
 
 export const getSettingItems = async (slug: string) => {
   try {
@@ -6,7 +7,11 @@ export const getSettingItems = async (slug: string) => {
     
     return response;
   } catch (error) {
-    console.log(error);
+    if (isAxiosError(error)) {
+      return error.response;
+    } else {
+      console.log(error);
+    }
   }
 };
 
@@ -22,8 +27,12 @@ export const addSettingItem = async (
     });
 
     return response;
-  } catch (error: any) {
-    return error.response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      return error.response;
+    } else {
+      console.log(error);
+    }
   }
 };
 
@@ -40,8 +49,12 @@ export const updateSettingItem = async (
     });
 
     return response;
-  } catch (error: any) {
-    return error.response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      return error.response;
+    } else {
+      console.log(error);
+    }
   }
 };
 
@@ -53,7 +66,11 @@ export const deleteSettingItem = async (
     const response = await axiosAuth.delete(`/api/${slug}/${itemId}`);
 
     return response;
-  } catch (error: any) {
-    return error.response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      return error.response;
+    } else {
+      console.log(error);
+    }
   }
 };

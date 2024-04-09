@@ -69,6 +69,7 @@ export default function AuthContextProvider({
       console.log(error);
       setLoggedIn(false);
       setLoading(false);
+      router.replace("/admin");
     }
   }, [router, pathName]);
 

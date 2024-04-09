@@ -24,6 +24,10 @@ const navItems: { title: string; link: string }[] = [
     title: "Settings",
     link: "/settings/meal-types",
   },
+  {
+    title: "Joints",
+    link: "/joints",
+  },
 ];
 
 export default function DashboardDrawer(props: IDashboardDrawer) {
@@ -75,6 +79,8 @@ export default function DashboardDrawer(props: IDashboardDrawer) {
                 selected={
                   navItem.title === "Settings"
                     ? pathname.includes("settings")
+                    : navItem.title === "Joints"
+                    ? pathname.includes("joints")
                     : pathname === `/admin/dashboard${navItem.link}`
                 }
               >
